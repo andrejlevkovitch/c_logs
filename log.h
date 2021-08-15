@@ -161,17 +161,18 @@ int  log_to_syslog_priority(enum LogSeverity severity);
     LOGGER->sinks[LOGGER->sink_count - 1].data    = (a_data);       \
   }
 
-#define LOGGER_SHUTDOWN()                           \
-  {                                                 \
-    for (uint i = 0; i < LOGGER->sink_count; ++i) { \
-      log_sink *sink = &LOGGER->sinks[i];           \
-      if (sink->dispose) {                          \
-        sink->dispose(sink->data);                  \
-      }                                             \
-    }                                               \
-    free(LOGGER->sinks);                            \
-    LOGGER->sink_count  = 0;                        \
-    LOGGER->main_filter = 0;                        \
+#define LOGGER_SHUTDOWN()                                                  \
+  {                                                                        \
+    for (uint log_sink_counter = 0; log_sink_counter < LOGGER->sink_count; \
+         ++log_sink_counter) {                                             \
+      log_sink *sink = &LOGGER->sinks[log_sink_counter];                   \
+      if (sink->dispose) {                                                 \
+        sink->dispose(sink->data);                                         \
+      }                                                                    \
+    }                                                                      \
+    free(LOGGER->sinks);                                                   \
+    LOGGER->sink_count  = 0;                                               \
+    LOGGER->main_filter = 0;                                               \
   }
 
 #define LOG_PREPARE_MESSAGE(severity, ...)                          \
@@ -191,8 +192,9 @@ int  log_to_syslog_priority(enum LogSeverity severity);
                           const char *     function,                         \
                           const char *     log_fmt_str_buf,                  \
                           void *           data) = NULL;                                \
-  for (uint i = 0; i < LOGGER->sink_count; ++i) {                            \
-    log_sink *cur_log_sink = &LOGGER->sinks[i];                              \
+  for (uint log_sink_counter = 0; log_sink_counter < LOGGER->sink_count;     \
+       ++log_sink_counter) {                                                 \
+    log_sink *cur_log_sink = &LOGGER->sinks[log_sink_counter];               \
     if (cur_log_sink->filter & (severity)) {                                 \
       if (cur_log_sink->format != last_format_clb) {                         \
         cur_log_sink->format(log_record_buf,                                 \
