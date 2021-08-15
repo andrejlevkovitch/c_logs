@@ -1,3 +1,36 @@
+/**\file
+ * Basic Concepts:
+ *
+ * - Sink - object for formatting and printing log records
+ *
+ * - LOGGER - list of sinks
+ *
+ * - \link log_sink#format format callback \endlink - callback for formatting
+ * log records
+ *
+ * - \link log_sink#consume consume callback \endlink - callback for printing
+ * log records
+ *
+ * - \link log_sink#dispose dispose callback \endlink - callback for destroying
+ * Sink
+ *
+ *
+ * Usage:
+ *
+ * 1. Add one or more sinks for LOGGER. You can use help macroses like:
+ * #LOGGER_ADD_STDERR_SINK or #LOGGER_ADD_FILE_SINK. For linux also you can
+ * use: #LOGGER_ADD_FD_SINK or #LOGGER_ADD_SYSLOG_SINK (if syslog is installed).
+ * If you want to add some special sink you can use #LOGGER_ADD_SINK macro
+ *
+ * 2. Use LOG_*, LOG_*_IF, LOG_*_EACH where * can be: INFO, TRACE, DEBUG,
+ * WARNING or ERROR. Also you can use LOG_* and LOG_*_IF where * are FAILURE or
+ * FAILUREX, note that after the call program will be terminated. For c++ you
+ * also can use #LOG_THROW and #LOG_THROW_IF
+ *
+ * 3. Before exit from program call #LOGGER_SHUTDOWN. NOTE: LOG_FAILURE* calls
+ * #LOGGER_SHUTDOWN automatically
+ */
+
 #pragma once
 
 
@@ -61,6 +94,14 @@ enum LogSeverity {
 
 typedef struct _log_sink {
   void *data;
+  /**\brief the callback uses for formatting log records
+   * \param buf buffer for writting record
+   * \param filename __FILE__
+   * \param line __LINE__
+   * \param function __func__
+   * \param message formatted log message
+   * \param data sink data
+   */
   void (*format)(char             buf[LOG_RECORD_MAX_SIZE],
                  enum LogSeverity severity,
                  const char *     filename,
@@ -68,7 +109,14 @@ typedef struct _log_sink {
                  const char *     function,
                  const char *     message,
                  void *           data);
-  void (*consume)(enum LogSeverity, const char *record, void *data);
+  /**\brief the callback uses for printing log records
+   * \param record log record from \link #format format callback \endlink
+   * \param data sink data
+   */
+  void (*consume)(enum LogSeverity severity, const char *record, void *data);
+  /**\brief the callback uses for destroing the sink
+   * \param data sink data
+   */
   void (*dispose)(void *data);
   uint8_t filter;
 } log_sink;
@@ -107,8 +155,16 @@ void log_fd_dispose(void *file);
 
 
 /**\brief add new sink to logger that writes logs to descriptor
+ * \param format_clb callback for formatting log records
+ * \param log_filter combination of LogSeverity that you want to use for the
+ * sink
  * \param descriptor file descriptor as int
  * \note automatically close descriptor at LOGGER_SHUTDOWN
+ * \details typical usage:
+ * ```
+ * int fd = open("fd.log", O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
+ * LOGGER_ADD_FD_SINK(log_default_format, LogAll, fd);
+ * ```
  */
 #  define LOGGER_ADD_FD_SINK(format_clb, log_filter, descriptor) \
     LOGGER_ADD_SINK(format_clb,                                  \
@@ -136,9 +192,17 @@ int  log_to_syslog_priority(enum LogSeverity severity);
 
 
 /**\brief add syslog logger sink
+ * \param format_clb callback for formatting log records
+ * \param log_filter combination of LogSeverity that you want to use for the
+ * sink
  * \note doesn't call openlog, so you should call it manually, or it will be
  * automatically called by first syslog call
  * \note doesn't call closelog, because the use is optional
+ * \details typical usage:
+ * ```
+ * openlog("sample", LOG_CONS | LOG_PID, 0);
+ * LOGGER_ADD_SYSLOG_SINK(log_syslog_format, LogAll);
+ * ```
  */
 #  define LOGGER_ADD_SYSLOG_SINK(format_clb, log_filter) \
     LOGGER_ADD_SINK(format_clb, log_filter, log_syslog_consume, NULL, NULL)
@@ -148,6 +212,16 @@ int  log_to_syslog_priority(enum LogSeverity severity);
 
 #define LOGGER (log_get_sink_list())
 
+/**\brief add new logger sink
+ * \param format_clb callback for formatting log records
+ * \param log_filter combination of LogSeverity that you want to use for the
+ * sink
+ * \param consume_clb consumer callback
+ * \param dispose_clb the callback uses at LOGGER_SHUTDOWN for destroy sink.
+ * Can be a NULL
+ * \param a_data some data (void *) for sink that can be used by format, consume
+ * and dispose callbacks. Can be a NULL
+ */
 #define LOGGER_ADD_SINK(format_clb,                                 \
                         log_filter,                                 \
                         consume_clb,                                \
@@ -166,6 +240,9 @@ int  log_to_syslog_priority(enum LogSeverity severity);
     LOGGER->sinks[LOGGER->sink_count - 1].data    = (a_data);       \
   }
 
+/**\brief close all sinks by calling \link log_sink#dispose dispose callback
+ * \endlink
+ */
 #define LOGGER_SHUTDOWN()                                                  \
   {                                                                        \
     for (uint log_sink_counter = 0; log_sink_counter < LOGGER->sink_count; \
@@ -176,6 +253,7 @@ int  log_to_syslog_priority(enum LogSeverity severity);
       }                                                                    \
     }                                                                      \
     free(LOGGER->sinks);                                                   \
+    LOGGER->sinks       = NULL;                                            \
     LOGGER->sink_count  = 0;                                               \
     LOGGER->main_filter = 0;                                               \
   }
@@ -261,25 +339,42 @@ int  log_to_syslog_priority(enum LogSeverity severity);
 #define LOG_INFO_EACH(n, ...)    LOG_FORMAT_EACH(n, LogInfo, __VA_ARGS__)
 
 
-#define LOG_FAILUREX(code, ...)                  \
-  {                                              \
-    LOG_PROCESS_RECORD(LogFailure, __VA_ARGS__); \
-    LOGGER_SHUTDOWN();                           \
-    exit(code);                                  \
-  }
-#define LOG_FAILURE(...) LOG_FAILUREX(EXIT_FAILURE, __VA_ARGS__);
-
+/**\brief terminate program after logging
+ * \note call LOGGER_SHUTDOWN before terminating
+ * \param code exit code
+ */
 #define LOG_FAILUREX_IF(cond, code, ...)         \
   if (cond) {                                    \
     LOG_PROCESS_RECORD(LogFailure, __VA_ARGS__); \
     LOGGER_SHUTDOWN();                           \
     exit(code);                                  \
   }
+/**\brief terminate program after logging, uses EXIT_FAILURE as exit code
+ */
 #define LOG_FAILURE_IF(cond, ...) \
   LOG_FAILUREX_IF(cond, EXIT_FAILURE, __VA_ARGS__)
 
+/**\see LOG_FAILUREX_IF
+ */
+#define LOG_FAILUREX(code, ...)                  \
+  {                                              \
+    LOG_PROCESS_RECORD(LogFailure, __VA_ARGS__); \
+    LOGGER_SHUTDOWN();                           \
+    exit(code);                                  \
+  }
+/**\see LOG_FAILURE_IF
+ */
+#define LOG_FAILURE(...) LOG_FAILUREX(EXIT_FAILURE, __VA_ARGS__);
+
 
 /**\brief add stderr logger sink
+ * \param format_clb callback for formatting log records
+ * \param log_filter combination of LogSeverity that you want to use for the
+ * sink
+ * \details typical usage:
+ * ```
+ * LOGGER_ADD_STDERR_SINK(log_default_format, LogAll);
+ * ```
  */
 #define LOGGER_ADD_STDERR_SINK(format_clb, log_filter) \
   LOGGER_ADD_SINK((format_clb), (log_filter), log_file_consume, NULL, stderr)
@@ -287,6 +382,11 @@ int  log_to_syslog_priority(enum LogSeverity severity);
 /**\brief add file logger sink
  * \param file FILE*
  * \note automatically close file at LOGGER_SHUTDOWN
+ * \details typical usage:
+ * ```
+ * FILE *log_file = fopen("file.log", "w");
+ * LOGGER_ADD_FILE_SINK(log_default_format, LogAll, log_file);
+ * ```
  */
 #define LOGGER_ADD_FILE_SINK(format_clb, log_filter, file) \
   LOGGER_ADD_SINK(format_clb,                              \
@@ -302,6 +402,9 @@ int  log_to_syslog_priority(enum LogSeverity severity);
 
 
 #ifdef __cplusplus
+/**\brief throw exception after logging
+ * \param exception_class type of throwing exception
+ */
 #  define LOG_THROW_IF(cond, exception_class, ...) \
     if (cond) {                                    \
       LOG_PREPARE_MESSAGE(LogThrow, __VA_ARGS__);  \
@@ -311,6 +414,8 @@ int  log_to_syslog_priority(enum LogSeverity severity);
       throw exception_class(log_fmt_str_buf);      \
     }
 
+/**\see LOG_THROW_IF
+ */
 #  define LOG_THROW(exception_class, ...) \
     LOG_THROW_IF(1, exception_class, __VA_ARGS__)
 #endif
