@@ -35,14 +35,13 @@
 #endif
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 #define LOG_MESSAGE_MAX_SIZE (512)
 #define LOG_RECORD_MAX_SIZE  (1024)
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 enum LogSeverity {
   LogNone    = 0,
