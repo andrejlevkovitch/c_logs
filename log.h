@@ -7,6 +7,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __cplusplus
+#  include <atomic>
+#  define LOG_ATOMIC_COUNTER_TYPE std::atomic_int
+#else
+#  include <stdatomic.h>
+#  define LOG_ATOMIC_COUNTER_TYPE atomic_int
+#endif
+
 #ifdef __linux__
 #  include <fcntl.h>
 #  include <unistd.h>
@@ -210,7 +218,21 @@ int  log_to_syslog_priority(enum LogSeverity severity);
     LOG_PROCESS_RECORD(severity, __VA_ARGS__);      \
   }
 
-#define LOG_FORMAT(severity, ...) LOG_FORMAT_IF(1, severity, __VA_ARGS__)
+#define LOG_FORMAT(severity, ...)              \
+  if (LOGGER->main_filter & (severity)) {      \
+    LOG_PROCESS_RECORD(severity, __VA_ARGS__); \
+  }
+
+#define LOG_FORMAT_EACH(n, severity, ...)                  \
+  if (LOGGER->main_filter & (severity)) {                  \
+    static LOG_ATOMIC_COUNTER_TYPE log_atomic_counter = n; \
+    if (log_atomic_counter == (n)) {                       \
+      LOG_PROCESS_RECORD(severity, __VA_ARGS__);           \
+      log_atomic_counter = 1;                              \
+    } else {                                               \
+      ++log_atomic_counter;                                \
+    }                                                      \
+  }
 
 
 #define LOG_TRACE(...)   LOG_FORMAT(LogTrace, __VA_ARGS__)
@@ -224,6 +246,12 @@ int  log_to_syslog_priority(enum LogSeverity severity);
 #define LOG_WARNING_IF(cond, ...) LOG_FORMAT_IF(cond, LogWarning, __VA_ARGS__)
 #define LOG_ERROR_IF(cond, ...)   LOG_FORMAT_IF(cond, LogError, __VA_ARGS__)
 #define LOG_INFO_IF(cond, ...)    LOG_FORMAT_IF(cond, LogInfo, __VA_ARGS__)
+
+#define LOG_TRACE_EACH(n, ...)   LOG_FORMAT_EACH(n, LogTrace, __VA_ARGS__)
+#define LOG_DEBUG_EACH(n, ...)   LOG_FORMAT_EACH(n, LogDebug, __VA_ARGS__)
+#define LOG_WARNING_EACH(n, ...) LOG_FORMAT_EACH(n, LogWarning, __VA_ARGS__)
+#define LOG_ERROR_EACH(n, ...)   LOG_FORMAT_EACH(n, LogError, __VA_ARGS__)
+#define LOG_INFO_EACH(n, ...)    LOG_FORMAT_EACH(n, LogInfo, __VA_ARGS__)
 
 
 #define LOG_FAILUREX(code, ...)                  \
