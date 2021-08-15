@@ -7,12 +7,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef __cplusplus
-#  include <atomic>
-#  define LOG_ATOMIC_COUNTER_TYPE std::atomic_int
+#if __STDC_VERSION__ >= 201112L || __cplusplus >= 201103L
+#  ifdef __STDC_VERSION__
+#    include <stdatomic.h>
+#    define LOG_ATOMIC_COUNTER_TYPE atomic_int
+#  elif __cplusplus
+#    include <atomic>
+#    define LOG_ATOMIC_COUNTER_TYPE std::atomic_int
+#  endif
 #else
-#  include <stdatomic.h>
-#  define LOG_ATOMIC_COUNTER_TYPE atomic_int
+#  define LOG_ATOMIC_COUNTER_TYPE int
+#  warning "atomic required c11/c++11 standard, LOG_*_EACH is not thread safe"
 #endif
 
 #ifdef __linux__
