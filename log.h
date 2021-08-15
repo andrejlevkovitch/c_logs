@@ -308,16 +308,29 @@ int  log_to_syslog_priority(enum LogSeverity severity);
     LOG_PROCESS_RECORD(severity, __VA_ARGS__); \
   }
 
-#define LOG_FORMAT_EACH(n, severity, ...)                  \
-  if (LOGGER->main_filter & (severity)) {                  \
-    static LOG_ATOMIC_COUNTER_TYPE log_atomic_counter = n; \
-    if (log_atomic_counter == (n)) {                       \
-      LOG_PROCESS_RECORD(severity, __VA_ARGS__);           \
-      log_atomic_counter = 1;                              \
-    } else {                                               \
-      ++log_atomic_counter;                                \
-    }                                                      \
-  }
+#ifndef __cplusplus
+#  define LOG_FORMAT_EACH(n, severity, ...)                  \
+    if (LOGGER->main_filter & (severity)) {                  \
+      static LOG_ATOMIC_COUNTER_TYPE log_atomic_counter = n; \
+      if (log_atomic_counter == (n)) {                       \
+        LOG_PROCESS_RECORD(severity, __VA_ARGS__);           \
+        log_atomic_counter = 1;                              \
+      } else {                                               \
+        ++log_atomic_counter;                                \
+      }                                                      \
+    }
+#else
+#  define LOG_FORMAT_EACH(n, severity, ...)                 \
+    if (LOGGER->main_filter & (severity)) {                 \
+      static LOG_ATOMIC_COUNTER_TYPE log_atomic_counter{n}; \
+      if (log_atomic_counter == (n)) {                      \
+        LOG_PROCESS_RECORD(severity, __VA_ARGS__);          \
+        log_atomic_counter = 1;                             \
+      } else {                                              \
+        ++log_atomic_counter;                               \
+      }                                                     \
+    }
+#endif
 
 
 #define LOG_TRACE(...)   LOG_FORMAT(LogTrace, __VA_ARGS__)
