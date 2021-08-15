@@ -25,7 +25,8 @@
 #  include <unistd.h>
 #endif
 
-#ifdef LOG_USE_SYSLOG_SINK
+#if __has_include(<syslog.h>)
+#  define LOG_USE_SYSLOG_SINK
 #  include <syslog.h>
 
 // XXX undef syslog defines for avoid intersection with logging macroses
