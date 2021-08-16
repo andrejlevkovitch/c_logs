@@ -517,13 +517,13 @@ inline void log_fd_dispose(void *a_desc) {
 
 #ifdef LOG_USE_SYSLOG_SINK
 
-void log_syslog_format(char             buf[LOG_RECORD_MAX_SIZE],
-                       enum LogSeverity severity,
-                       const char *     filename,
-                       int              line,
-                       const char *     function,
-                       const char *     message,
-                       void *           data) {
+inline void log_syslog_format(char             buf[LOG_RECORD_MAX_SIZE],
+                              enum LogSeverity severity,
+                              const char *     filename,
+                              int              line,
+                              const char *     function,
+                              const char *     message,
+                              void *           data) {
   (void)severity;
   (void)data;
 
