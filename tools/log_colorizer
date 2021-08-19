@@ -1,0 +1,52 @@
+#!/bin/bash
+# colorize default log format
+# typical usage:
+#   sample_program 2>&1 | ./log_colorizer
+
+
+TERMINAL_NO_COLOR="\033[0m"
+TERMINAL_BLUE="\033[1;34m"
+TERMINAL_GREEN="\033[1;32m"
+TERMINAL_YELLOW="\033[1;33m"
+TERMINAL_RED="\033[1;31m"
+
+MESSAGE_PREFIX="|"
+
+while read -r line; do
+  severity=${line:0:3}
+  meta="${line% $MESSAGE_PREFIX *}"
+  meta="${meta:4}"
+  msg="${line#* $MESSAGE_PREFIX }"
+
+
+  color_off=$TERMINAL_NO_COLOR
+  color_on=$TERMINAL_NO_COLOR
+  case $severity in
+    TRC)
+      color_on=$TERMINAL_GREEN
+      ;;
+    DBG)
+      color_on=$TERMINAL_GREEN
+      ;;
+    INF)
+      color_on=$TERMINAL_BLUE
+      ;;
+    WRN)
+      color_on=$TERMINAL_YELLOW
+      ;;
+    ERR)
+      color_on=$TERMINAL_RED
+      ;;
+    FLR)
+      color_on=$TERMINAL_RED
+      ;;
+    *)
+      echo -e "$line"
+      continue
+      ;;
+  esac
+
+
+  out_line="$color_on[$severity]$color_off $meta $MESSAGE_PREFIX $color_on$msg$color_off"
+  echo -e "$out_line"
+done
