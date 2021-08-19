@@ -473,14 +473,22 @@ inline void log_default_format(char             buf[LOG_RECORD_MAX_SIZE],
                                void *           data) {
   (void)data;
 
-  int count = snprintf(buf,
-                       LOG_RECORD_MAX_SIZE,
-                       "%s %s:%d:%s | %s\n",
-                       log_severety_to_str(severity),
-                       filename,
-                       line,
-                       function,
-                       message);
+  const char *found = NULL;
+  int         count = 0;
+
+  found = strrchr(filename, '/');
+  if (found != NULL) {
+    filename = found + 1 /*ignore slash symbol*/;
+  }
+
+  count = snprintf(buf,
+                   LOG_RECORD_MAX_SIZE,
+                   "%s %s:%d:%s | %s\n",
+                   log_severety_to_str(severity),
+                   filename,
+                   line,
+                   function,
+                   message);
   if (count >= LOG_RECORD_MAX_SIZE) {
     buf[LOG_RECORD_MAX_SIZE - 1] = '\0';
   }
@@ -527,13 +535,21 @@ inline void log_syslog_format(char             buf[LOG_RECORD_MAX_SIZE],
   (void)severity;
   (void)data;
 
-  int count = snprintf(buf,
-                       LOG_RECORD_MAX_SIZE,
-                       "%s:%d:%s | %s",
-                       filename,
-                       line,
-                       function,
-                       message);
+  const char *found = NULL;
+  int         count = 0;
+
+  found = strrchr(filename, '/');
+  if (found != NULL) {
+    filename = found + 1 /*ignore slash symbol*/;
+  }
+
+  count = snprintf(buf,
+                   LOG_RECORD_MAX_SIZE,
+                   "%s:%d:%s | %s",
+                   filename,
+                   line,
+                   function,
+                   message);
   if (count >= LOG_RECORD_MAX_SIZE) {
     buf[LOG_RECORD_MAX_SIZE - 1] = '\0';
   }
