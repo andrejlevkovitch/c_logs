@@ -458,7 +458,7 @@ inline const char *log_severety_to_str(enum LogSeverity severity) {
   case LogInfo:
     return "INF";
   default:
-    assert(NULL && "unknown severity");
+    assert(0 && "unknown severity");
   }
 
   return "UNK";
