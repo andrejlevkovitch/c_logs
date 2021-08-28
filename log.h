@@ -79,16 +79,16 @@ extern "C" {
 
 enum LogSeverity {
   LogNone    = 0,
-  LogFirst   = 0b000001,
-  LogFailure = 0b000001,
-  LogError   = 0b000010,
-  LogThrow   = 0b000010,
-  LogWarning = 0b000100,
-  LogInfo    = 0b001000,
-  LogDebug   = 0b010000,
-  LogTrace   = 0b100000,
-  LogLast    = 0b100000,
-  LogAll     = 0b111111,
+  LogFirst   = 1 << 0,
+  LogFailure = 1 << 0,
+  LogError   = 1 << 1,
+  LogThrow   = 1 << 1,
+  LogWarning = 1 << 2,
+  LogInfo    = 1 << 3,
+  LogDebug   = 1 << 4,
+  LogTrace   = 1 << 5,
+  LogLast    = 1 << 5,
+  LogAll = LogFailure | LogError | LogWarning | LogInfo | LogDebug | LogTrace,
 };
 
 
