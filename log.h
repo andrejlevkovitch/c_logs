@@ -511,8 +511,9 @@ inline void log_file_dispose(void *file) {
 inline void
 log_fd_consume(enum LogSeverity severity, const char *record, void *a_desc) {
   (void)severity;
-  int desc = PTR2FD(a_desc);
-  write(desc, record, strlen(record));
+  int desc  = PTR2FD(a_desc);
+  int count = write(desc, record, strlen(record));
+  (void)count;
 }
 
 inline void log_fd_dispose(void *a_desc) {
