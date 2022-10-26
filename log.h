@@ -27,8 +27,8 @@
  * FAILUREX, note that after the call program will be terminated. For c++ you
  * also can use #LOG_THROW and #LOG_THROW_IF
  *
- * 3. Before exit from program call #LOGGER_SHUTDOWN. NOTE: LOG_FAILURE* calls
- * #LOGGER_SHUTDOWN automatically
+ * 3. Before exit from program call #LOGGER_SHUTDOWN. NOTE: the call is optional
+ * NOTE: LOG_FAILURE* calls #LOGGER_SHUTDOWN automatically
  */
 
 #pragma once
