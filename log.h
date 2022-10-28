@@ -247,9 +247,9 @@ int  log_to_syslog_priority(enum LogSeverity severity);
   {                                                                            \
     for (unsigned log_sink_counter = 0; log_sink_counter < LOGGER->sink_count; \
          ++log_sink_counter) {                                                 \
-      log_sink *log_sink = &LOGGER->sinks[log_sink_counter];                   \
-      if (log_sink->dispose) {                                                 \
-        log_sink->dispose(log_sink->data);                                     \
+      log_sink *cur_log_sink = &LOGGER->sinks[log_sink_counter];               \
+      if (cur_log_sink->dispose) {                                             \
+        cur_log_sink->dispose(cur_log_sink->data);                             \
       }                                                                        \
     }                                                                          \
     free(LOGGER->sinks);                                                       \
