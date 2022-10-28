@@ -43,10 +43,10 @@
 #if __STDC_VERSION__ >= 201112L || __cplusplus >= 201103L
 #  ifdef __STDC_VERSION__
 #    include <stdatomic.h>
-#    define LOG_ATOMIC_COUNTER_TYPE atomic_int
+#    define LOG_ATOMIC_COUNTER_TYPE atomic_size_t
 #  elif __cplusplus
 #    include <atomic>
-#    define LOG_ATOMIC_COUNTER_TYPE std::atomic_int
+#    define LOG_ATOMIC_COUNTER_TYPE std::atomic_size_t
 #  endif
 #else
 #  define LOG_ATOMIC_COUNTER_TYPE int
@@ -322,7 +322,7 @@ int  log_to_syslog_priority(enum LogSeverity severity);
 #else
 #  define LOG_FORMAT_EACH(n, severity, ...)                 \
     if (LOGGER->main_filter & (severity)) {                 \
-      static LOG_ATOMIC_COUNTER_TYPE log_atomic_counter{n}; \
+      static LOG_ATOMIC_COUNTER_TYPE log_atomic_counter(n); \
       if (log_atomic_counter == (n)) {                      \
         LOG_PROCESS_RECORD(severity, __VA_ARGS__);          \
         log_atomic_counter = 1;                             \
