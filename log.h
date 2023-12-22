@@ -104,11 +104,11 @@ typedef struct _log_sink {
    */
   void (*format)(char             buf[LOG_RECORD_MAX_SIZE],
                  enum LogSeverity severity,
-                 const char *     filename,
+                 const char      *filename,
                  int              line,
-                 const char *     function,
-                 const char *     message,
-                 void *           data);
+                 const char      *function,
+                 const char      *message,
+                 void            *data);
   /**\brief the callback uses for printing log records
    * \param record log record from \link #format format callback \endlink
    * \param data sink data
@@ -129,17 +129,17 @@ typedef struct _log_sink_list {
 
 
 log_sink_list *log_get_sink_list();
-const char *   log_severety_to_str(enum LogSeverity severity);
+const char    *log_severety_to_str(enum LogSeverity severity);
 void           log_default_format(char             buf[LOG_RECORD_MAX_SIZE],
                                   enum LogSeverity severity,
-                                  const char *     filename,
+                                  const char      *filename,
                                   int              line,
-                                  const char *     function,
-                                  const char *     message,
-                                  void *           data);
+                                  const char      *function,
+                                  const char      *message,
+                                  void            *data);
 void           log_file_consume(enum LogSeverity severity,
-                                const char *     record,
-                                void *           file);
+                                const char      *record,
+                                void            *file);
 void           log_file_dispose(void *file);
 
 
@@ -149,8 +149,8 @@ void           log_file_dispose(void *file);
 #  define FD2PTR(desc) (void *)(uintptr_t)(desc)
 
 void log_fd_consume(enum LogSeverity severity,
-                    const char *     record,
-                    void *           a_desc);
+                    const char      *record,
+                    void            *a_desc);
 void log_fd_dispose(void *file);
 
 
@@ -180,14 +180,14 @@ void log_fd_dispose(void *file);
 
 void log_syslog_format(char             buf[LOG_RECORD_MAX_SIZE],
                        enum LogSeverity severity,
-                       const char *     filename,
+                       const char      *filename,
                        int              line,
-                       const char *     function,
-                       const char *     message,
-                       void *           data);
+                       const char      *function,
+                       const char      *message,
+                       void            *data);
 void log_syslog_consume(enum LogSeverity severity,
-                        const char *     record,
-                        void *           data);
+                        const char      *record,
+                        void            *data);
 int  log_to_syslog_priority(enum LogSeverity severity);
 
 
@@ -270,11 +270,11 @@ int  log_to_syslog_priority(enum LogSeverity severity);
   char log_record_buf[LOG_RECORD_MAX_SIZE];                                  \
   void (*last_format_clb)(char             buf[LOG_RECORD_MAX_SIZE],         \
                           enum LogSeverity severity,                         \
-                          const char *     filename,                         \
+                          const char      *filename,                         \
                           int              line,                             \
-                          const char *     function,                         \
-                          const char *     log_fmt_str_buf,                  \
-                          void *           data) = NULL;                                \
+                          const char      *function,                         \
+                          const char      *log_fmt_str_buf,                  \
+                          void            *data) = NULL;                                \
   for (unsigned log_sink_counter = 0; log_sink_counter < LOGGER->sink_count; \
        ++log_sink_counter) {                                                 \
     log_sink *cur_log_sink = &LOGGER->sinks[log_sink_counter];               \
@@ -466,11 +466,11 @@ inline const char *log_severety_to_str(enum LogSeverity severity) {
 
 inline void log_default_format(char             buf[LOG_RECORD_MAX_SIZE],
                                enum LogSeverity severity,
-                               const char *     filename,
+                               const char      *filename,
                                int              line,
-                               const char *     function,
-                               const char *     message,
-                               void *           data) {
+                               const char      *function,
+                               const char      *message,
+                               void            *data) {
   (void)data;
 
   const char *found = NULL;
@@ -528,11 +528,11 @@ inline void log_fd_dispose(void *a_desc) {
 
 inline void log_syslog_format(char             buf[LOG_RECORD_MAX_SIZE],
                               enum LogSeverity severity,
-                              const char *     filename,
+                              const char      *filename,
                               int              line,
-                              const char *     function,
-                              const char *     message,
-                              void *           data) {
+                              const char      *function,
+                              const char      *message,
+                              void            *data) {
   (void)severity;
   (void)data;
 
